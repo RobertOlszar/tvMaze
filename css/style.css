@@ -13,8 +13,12 @@ body {
   }
   
   .shows-wrapper .card {
-    width: 24%;
-    margin-bottom: 1.5%;
+    width: 32%;
+    margin-bottom: 2%;
+  }
+
+  .shows-wrapper .card img {
+    margin-bottom: 7%;
   }
   
   .show-preview {
@@ -38,6 +42,7 @@ body {
   .card-preview-bg {
     width: 100%;
     height: 45%;
+    margin-bottom: 5%;
     background-position: center;
     background-size: cover;
   }

@@ -55,9 +55,12 @@ class TvMaze {
         const { showId } = event.target.dataset;
         console.log(showId);
         getShowById(showId).then(show => {
-            console.log(show);
             const card = this.createShowCard(show, true);
+            console.log(card);
             this.viewElems.showPreview.appendChild(card);
+            const closeBtn = document.querySelector(`[id='showPreview'] [data-show-id="${showId}"]`);
+            closeBtn.innerText = "Hide details";
+            closeBtn.style.backgroundColor = "red";
             this.viewElems.showPreview.style.display = "block";
         });
     }
@@ -75,7 +78,7 @@ class TvMaze {
         const divCardBody = createDOMElem('div', 'card-body');
         const h5 = createDOMElem('h5', 'card-title', show.name);
         const btn = createDOMElem('button', 'btn btn-primary', 'Show details');
-        let img, p;
+        let img, p, h6;
 
         if (show.image) {
             if (isDetailed) {
@@ -85,14 +88,41 @@ class TvMaze {
                 img = createDOMElem('img', 'card-img-top', null, show.image.medium);
             }
         } else {
-            img = createDOMElem('img', 'card-img-top', null, "https://via.placeholder.com/210x295");
+            if (isDetailed) {
+                img = createDOMElem('div', 'card-preview-bg');
+                img.style.backgroundImage = `url('https://via.placeholder.com/210x295')`;
+            } else {
+                img = createDOMElem('img', 'card-img-top', null, "https://via.placeholder.com/210x295");
+            }
+        }
+        
+        if (isDetailed) {
+            let cast = "";
+
+            for (let i = 0; i < show._embedded.cast.length; i++) {
+                if (i < show._embedded.cast.length - 1) {
+                    cast += `${show._embedded.cast[i].person.name}, `;
+                } else {
+                    cast += `${show._embedded.cast[i].person.name}`;
+                }
+            }
+
+            if (cast) {
+                console.log(show._embedded.cast.length);
+                h6 = createDOMElem('h6', 'card-title');
+                h6.innerText = `Cast: ${cast}`;
+            }else {
+                h6 = createDOMElem('h6', 'card-title', "No cast specified");
+            }
+        } else {
+            h6 = createDOMElem('h6', 'card-title', "");
         }
 
         if (show.summary) {
             if (isDetailed) {
-                p = createDOMElem('p', 'card-text', show.summary);
+                p = createDOMElem('p', 'card-text', DOMPurify.sanitize(show.summary));
             } else {
-                p = createDOMElem('p', 'card-text', `${show.summary.slice(0, 80)}...`);
+                p = createDOMElem('p', 'card-text', `${DOMPurify.sanitize(show.summary).slice(0, 40)}...`);
             }
         } else {
             p = createDOMElem('p', 'card-text', "There is no summary.");
@@ -110,6 +140,7 @@ class TvMaze {
         divCard.appendChild(divCardBody);
         divCardBody.appendChild(img);
         divCardBody.appendChild(h5);
+        divCardBody.appendChild(h6);
         divCardBody.appendChild(p);
         divCardBody.appendChild(btn);
 
