@@ -24,9 +24,20 @@ class TvMaze {
     }
 
     setupListeners = () => {
+        this.viewElems.searchInput.addEventListener('keydown', this.handleSubmit);
+        this.viewElems.searchButton.addEventListener('click', this.handleSubmit);
         Object.keys(this.showNameButtons).forEach(showName => {
             this.showNameButtons[showName].addEventListener('click', this.setCurrentNameFilter);
         })
+    }
+
+    handleSubmit = () => {
+        if (event.type === 'click' || event.key === 'Enter') {
+            this.selectedName = this.viewElems.searchInput.value;
+            searchInput.value = "";
+            console.log(this.selectedName);
+            this.fetchAndDisplayShows();
+        }
     }
 
     setCurrentNameFilter = () => {
@@ -39,6 +50,7 @@ class TvMaze {
     }
 
     renderCardsOnList = (shows) => {
+        let i = 0;
         Array.from(
             document.querySelectorAll('[data-show-id]')
         ).forEach(btn => btn.removeEventListener('click', this.openDetailsView));
@@ -48,6 +60,14 @@ class TvMaze {
         for (const { show } of shows) {
             const card = this.createShowCard(show);
             this.viewElems.showsWrapper.appendChild(card);
+            i++;
+        }
+        this.viewElems.numOfResults.innerText = `Number of results: ${i}`;
+
+        if (i === 0) {
+            this.viewElems.errorAlert.innerText = "No results.";
+        } else {
+            this.viewElems.errorAlert.innerText = "";
         }
     }
 
@@ -76,6 +96,7 @@ class TvMaze {
     createShowCard = (show, isDetailed) => {
         const divCard = createDOMElem('div', 'card');
         const divCardBody = createDOMElem('div', 'card-body');
+        const divCardBodyText = createDOMElem('div', 'card-body-text');
         const h5 = createDOMElem('h5', 'card-title', show.name);
         const btn = createDOMElem('button', 'btn btn-primary', 'Show details');
         let img, p, h6;
@@ -139,10 +160,11 @@ class TvMaze {
 
         divCard.appendChild(divCardBody);
         divCardBody.appendChild(img);
-        divCardBody.appendChild(h5);
-        divCardBody.appendChild(h6);
-        divCardBody.appendChild(p);
-        divCardBody.appendChild(btn);
+        divCardBody.appendChild(divCardBodyText);
+        divCardBodyText.appendChild(h5);
+        divCardBodyText.appendChild(h6);
+        divCardBodyText.appendChild(p);
+        divCardBodyText.appendChild(btn);
 
         return divCard;
     }

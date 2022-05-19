@@ -4,11 +4,40 @@ body {
   
   .search-bar {
     margin: 30px 0;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .search-bar .dropdown {
+    width: 25%;
+  }
+
+  .search-bar .search-form {
+    width: 75%;
+  }
+
+  .search-bar .search-form input {
+    width: 40%;
+    border-radius: 5px;
+    border: 1px solid rgb(87, 87, 87);
+    padding: 6px;
+    background-color: rgb(241, 241, 241);
+  }
+
+  .errorAlert {
+    font-size: 12px;
+    color: red;
+  }
+
+  .numOfResults {
+    font-size: 12px;
+    color: gray;
   }
   
   .shows-wrapper {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 2%;
     flex-wrap: wrap;
   }
   
@@ -38,10 +67,26 @@ body {
   .show-preview .card {
     height: 100%;
   }
-  
+
+  .show-preview .card-body {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .show-preview .card-body-text {
+    width: 50%;
+    padding: 20px;
+  } 
+
+  .show-preview .card-body-text button {
+    top: 10px;
+    right: 20px;
+    position: absolute;
+  }
+
   .card-preview-bg {
-    width: 100%;
-    height: 45%;
+    width: 47%;
+    height: 84%;
     margin-bottom: 5%;
     background-position: center;
     background-size: cover;
