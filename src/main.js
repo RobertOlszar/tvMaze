@@ -5,14 +5,33 @@ class TvMaze {
     constructor() {
         this.viewElems = {};
         this.showNameButtons = {};
-        this.selectedName = "harry";
+        this.selectedName;
+        this.favouritesList;
         this.initializeApp();
     }
 
     initializeApp = () => {
         this.connectDOMElements();
         this.setupListeners();
+        this.getSelectedName();
         this.fetchAndDisplayShows();
+        this.getFavouritesList();
+    }
+
+    getSelectedName = () => {
+        if (localStorage.getItem('selectedName')) {
+            this.selectedName = localStorage.getItem('selectedName');
+        } else {
+            this.selectedName = "harry";
+        }
+    }
+
+    getFavouritesList = () => {
+        if (localStorage.getItem('favouritesList')) {
+            this.favouritesList = JSON.parse(localStorage.getItem('favouritesList'));
+        } else {
+            this.favouritesList = [];
+        }
     }
 
     connectDOMElements = () => {
@@ -34,9 +53,13 @@ class TvMaze {
     handleSubmit = () => {
         if (event.type === 'click' || event.key === 'Enter') {
             this.selectedName = this.viewElems.searchInput.value;
-            searchInput.value = "";
-            console.log(this.selectedName);
-            this.fetchAndDisplayShows();
+            localStorage.setItem('selectedName', this.selectedName);
+            if (this.selectedName !== "") {
+                searchInput.value = "";
+                this.fetchAndDisplayShows();
+            } else {
+                this.viewElems.errorAlert.innerText = "Enter title first.";
+            }
         }
     }
 
@@ -49,19 +72,24 @@ class TvMaze {
         getShowsByKey(this.selectedName).then(shows => this.renderCardsOnList(shows));
     }
 
-    renderCardsOnList = (shows) => {
+    renderCardsOnList = (shows, favouritesList) => {
         let i = 0;
         Array.from(
             document.querySelectorAll('[data-show-id]')
         ).forEach(btn => btn.removeEventListener('click', this.openDetailsView));
 
         this.viewElems.showsWrapper.innerHTML = "";
+        for (const favouritesItem of this.favouritesList) {
+            const card = this.createShowCard(favouritesItem, null, true);
+            this.viewElems.showsWrapper.appendChild(card);
+        }
 
         for (const { show } of shows) {
             const card = this.createShowCard(show);
             this.viewElems.showsWrapper.appendChild(card);
             i++;
         }
+
         this.viewElems.numOfResults.innerText = `Number of results: ${i}`;
 
         if (i === 0) {
@@ -73,10 +101,9 @@ class TvMaze {
 
     openDetailsView = (event) => {
         const { showId } = event.target.dataset;
-        console.log(showId);
+        body.style.overflow = "hidden";
         getShowById(showId).then(show => {
             const card = this.createShowCard(show, true);
-            console.log(card);
             this.viewElems.showPreview.appendChild(card);
             const closeBtn = document.querySelector(`[id='showPreview'] [data-show-id="${showId}"]`);
             closeBtn.innerText = "Hide details";
@@ -86,6 +113,7 @@ class TvMaze {
     }
 
     closeDetailsView = (event) => {
+        body.style.overflow = "initial";
         const { showId } = event.target.dataset;
         const closeBtn = document.querySelector(`[id='showPreview'] [data-show-id="${showId}"]`);
         closeBtn.removeEventListener('click', this.closeDetailsView);
@@ -93,12 +121,45 @@ class TvMaze {
         this.viewElems.showPreview.innerHTML = '';
     }
 
-    createShowCard = (show, isDetailed) => {
+    addToFavouritesList = (event) => {
+        const { showId } = event.target.dataset;
+        getShowById(showId).then(show => {
+            let duplication;
+            for (const favouritesItem of this.favouritesList) {
+                if (favouritesItem.id === show.id) {
+                    duplication = true;
+                    break;
+                }
+            }
+            if (!duplication) {
+                this.favouritesList.push(show);
+                localStorage.setItem('favouritesList', JSON.stringify(this.favouritesList));
+                window.location.reload(true);
+            }
+        });
+    }
+
+    removeFromFavouritesList = (event) => {
+        const { showId } = event.target.dataset;
+        getShowById(showId).then(show => {
+            for (const favouritesItem of this.favouritesList) {
+                if (favouritesItem.id === show.id) {
+                    this.favouritesList.splice(this.favouritesList.indexOf(favouritesItem), 1);
+                    window.location.reload(true);
+                    break;
+                }
+            }
+            localStorage.setItem('favouritesList', JSON.stringify(this.favouritesList));
+        });
+    }
+
+    createShowCard = (show, isDetailed, isFavourite) => {
         const divCard = createDOMElem('div', 'card');
         const divCardBody = createDOMElem('div', 'card-body');
         const divCardBodyText = createDOMElem('div', 'card-body-text');
         const h5 = createDOMElem('h5', 'card-title', show.name);
         const btn = createDOMElem('button', 'btn btn-primary', 'Show details');
+        const btnFav = createDOMElem('button', 'btn btn-warning', 'Add to favourites');
         let img, p, h6;
 
         if (show.image) {
@@ -129,12 +190,12 @@ class TvMaze {
             }
 
             if (cast) {
-                console.log(show._embedded.cast.length);
                 h6 = createDOMElem('h6', 'card-title');
                 h6.innerText = `Cast: ${cast}`;
             }else {
                 h6 = createDOMElem('h6', 'card-title', "No cast specified");
             }
+
         } else {
             h6 = createDOMElem('h6', 'card-title', "");
         }
@@ -150,13 +211,25 @@ class TvMaze {
         }
 
         btn.dataset.showId = show.id;
+        btnFav.dataset.showId = show.id;
 
         if (isDetailed) {
             btn.addEventListener('click', this.closeDetailsView);
         } else {
             btn.addEventListener('click', this.openDetailsView);
         }
-        
+
+        if (isDetailed) {
+            btnFav.style.display = "none";
+        } else {
+            if (isFavourite) {
+                btnFav.style.backgroundColor = 'red';
+                btnFav.innerText = "Delete favorite";
+                btnFav.addEventListener('click', this.removeFromFavouritesList);
+            } else {
+                btnFav.addEventListener('click', this.addToFavouritesList);
+            }
+        }
 
         divCard.appendChild(divCardBody);
         divCardBody.appendChild(img);
@@ -165,6 +238,7 @@ class TvMaze {
         divCardBodyText.appendChild(h6);
         divCardBodyText.appendChild(p);
         divCardBodyText.appendChild(btn);
+        divCardBodyText.appendChild(btnFav);
 
         return divCard;
     }
